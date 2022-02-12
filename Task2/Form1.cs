@@ -24,9 +24,6 @@ namespace Task2
         {
             InitializeComponent();
         }
-        private void readTask() {
-            
-        }
         private void copyBtn_Click(object sender, EventArgs e)
         {
             if (!File.Exists(pathTxtBox.Text))
