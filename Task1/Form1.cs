@@ -22,18 +22,18 @@ namespace Task1
         public Form1()
         {
             InitializeComponent();
+            threads = new Thread[]{ new Thread(GenerateNumbers), new Thread(GenerateLetters), new Thread(GenerateSymbols) };
             numberPriority.DataSource = Enum.GetValues(typeof(ThreadPriority));
             lettersPriority.DataSource = Enum.GetValues(typeof(ThreadPriority));
             symbolsPriority.DataSource = Enum.GetValues(typeof(ThreadPriority));
             countGroupBox.Enabled = false;
-            threads = new Thread[]{ new Thread(GenerateNumbers), new Thread(GenerateLetters), new Thread(GenerateSymbols) };
 
         }
-        private void UpdateCounts() {
-            numbersCount.Text = numbersCount_.ToString();
-            lettersCount.Text = lettersCount_.ToString();
-            symbolsCount.Text = symbolsCount_.ToString();
-        }
+        //private void UpdateCounts() {
+        //    numbersCount.Text = numbersCount_.ToString();
+        //    lettersCount.Text = lettersCount_.ToString();
+        //    symbolsCount.Text = symbolsCount_.ToString();
+        //}
 
         private void GenerateNumbers(object state)
         {
@@ -82,6 +82,7 @@ namespace Task1
         }
         private void generateBtn_Click(object sender, EventArgs e)
         {
+            try { 
             foreach (var item in threads)
             {
                item.IsBackground = true;
@@ -90,6 +91,11 @@ namespace Task1
             threads[0].Priority = (ThreadPriority)numberPriority.SelectedItem;
             threads[1].Priority = (ThreadPriority)lettersPriority.SelectedItem;
             threads[2].Priority = (ThreadPriority)symbolsPriority.SelectedItem;
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void lettersPriority_SelectedIndexChanged(object sender, EventArgs e)
