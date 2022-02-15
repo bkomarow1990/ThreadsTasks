@@ -14,88 +14,130 @@ namespace Task2
 {
     public partial class Form1 : Form
     {
-        int partSz = 0;
-        long fileSz = 0;
-        bool mod;
-        int offset = 0;
-        int position = 0;
-        List<byte[]> data = null;
         public Form1()
         {
             InitializeComponent();
         }
         private void copyBtn_Click(object sender, EventArgs e)
         {
+            //await Task.Run(() => {
             if (!File.Exists(pathTxtBox.Text))
             {
                 MessageBox.Show("File doesn`t exists");
                 return;
             }
-            List<Thread> threads = new List<Thread>();
-            //using (FileStream _from_stream = new FileStream(pathTxtBox.Text, FileMode.Open))
-            //{
-
-            //    for (int i = 0; i < (int)threadsNUP.Value; i++)
-            //        using (FileStream _to_stream = new FileStream(string.Format("file_{0,3}.dat", i), FileMode.OpenOrCreate))
-            //        {
-            //            long _byte_counter = _file_length;
-            //            while (_from_stream.CanRead && _byte_counter > 0)
-            //            {
-            //                _byte_counter--;
-            //                _to_stream.WriteByte((byte)_from_stream.ReadByte());
-            //            }
-            //        }
-            //}
-
-            int count = (int)threadsNUP.Value;
-            using (FileStream fs = new FileStream(pathTxtBox.Text, FileMode.Open, FileAccess.Read))
+            int pos = 0;
+            long size = 0;
+            int count = 0;
+            int partSize = 0;
+            int[] positions = null;
+            BinaryReader b = null;
+            FileStream fs = new FileStream(pathTxtBox.Text, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            size = fs.Length;
+            count = (int)threadsNUP.Value;
+            partSize = (int)(size / count);
+            positions = new int[count+1];
+            positions[0] = 0;
+            positions[count] = 0;
+            for (int i = 1; i < count; i++)
             {
-                fileSz = fs.Length;
-                partSz = (int)(fileSz / count); // Размер одной части
-                mod = fs.Length % count == 0; // Все части одного размера
-              
+                positions[i] = pos + partSize;
             }
-            List<Task> tasks = new List<Task>();
-            data = new List<byte[]>();
+             b = new BinaryReader(fs);
+            
+            //Task[] tasks = new Task[count];
             string path = pathTxtBox.Text;
+           // for (int i = 0; i < count; i++)
+            //{
+                //tasks[i] = Task.Factory.StartNew(() =>
+                //{
+                //ThreadPool.QueueUserWorkItem((obj) => {
+                
+            Parallel.For(0, count, (i) => {
+                    b.BaseStream.Seek(positions[i], SeekOrigin.Begin);
+                    byte[] data = b.ReadBytes(partSize);
+                    using (var stream = File.Open(path + i + ".part", FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                    {
+                        using (var writer = new BinaryWriter(stream))
+                        {
+                            writer.Write(data);
+                        }
+                    }
+                });
+                 
+               // });
+                    
+               // });
+
+            //}
+            //Thread.Sleep(3000);
+            //Task.WaitAll(tasks);
+            using (var stream = new FileStream(Path.GetFileNameWithoutExtension(pathTxtBox.Text) + "copy" + Path.GetExtension(pathTxtBox.Text), FileMode.Create))
+            {
+                for (int j = 0; j < count; j++)
+                {
+
+                    byte[] bytes = File.ReadAllBytes(pathTxtBox.Text + j + ".part");
+                    stream.Write(bytes, 0, bytes.Length);
+                }
+            }
+
+            //});
+
             for (int i = 0; i < count; i++)
             {
-                tasks.Add(Task.Factory.StartNew(() => {
-                    using (FileStream s = File.OpenRead(path))
-                    using (BinaryReader r = new BinaryReader(s))
-                    {
-                        r.BaseStream.Seek(position, SeekOrigin.Begin);
-                        
-                            position += partSz;
-                        
-                        byte[] by = r.ReadBytes(partSz);
-                        data.Add(by);
-                    }
-
-
-                }));
-                
+                if (File.Exists(pathTxtBox.Text + i + ".part"))
+                {
+                    File.Delete(pathTxtBox.Text + i + ".part");
+                }
             }
-            Task.WaitAll(tasks.ToArray());
-            List<byte> bytes = new List<byte>();
-            foreach (var item in data)
-            {
-                bytes.AddRange(item);
-            }
-            File.WriteAllBytes(Path.GetFileNameWithoutExtension(pathTxtBox.Text)+"copy"+Path.GetExtension(pathTxtBox.Text), bytes.ToArray());
+            //File.WriteAllBytes(pathTxtBox.Text, )
+            //List<Thread> threads = new List<Thread>();
 
-            //data = File.ReadAllBytes(pathTxtBox.Text);
+            //int count = (int)threadsNUP.Value;
+            //long fileSz = 0;
+            //int partSz = 0;
+            //using (FileStream fs = new FileStream(pathTxtBox.Text, FileMode.Open, FileAccess.Read, FileShare.Read))
+            //{
+            //    fileSz = fs.Length;
+            //    partSz = (int)(fileSz / count);
+            //}
             //List<Task> tasks = new List<Task>();
-            //int length = data.Length;
+            //List<byte[]> data = new List<byte[]>();
+            //string path = pathTxtBox.Text;
+            //int position = 0;
             //for (int i = 0; i < count; i++)
             //{
-            //    tasks[i] = Task.Factory.StartNew(() => { 
-            //        File.WriteAllBytes($"{pathTxtBox.Text}.{i}", data);
-            //    });
+            //    tasks.Add(Task.Factory.StartNew(() =>
+            //    {
+            //        using (FileStream s = File.OpenRead(path))
+            //        using (BinaryReader r = new BinaryReader(s))
+            //        {
+            //            r.BaseStream.Seek(position, SeekOrigin.Begin);
+            //            position += partSz;
+            //            byte[] by;
+            //            if (i == count - 1)
+            //            {
+            //                by = r.ReadBytes((int)(fileSz - position));
+            //            }
+            //            else
+            //            {
+            //                by = r.ReadBytes(partSz);
+
+            //            }
+            //            data.Add(by);
+            //        }
+            //    }));
 
             //}
-            //await Task.WhenAll(tasks);
-
+            //position = 0;
+            //Task.WaitAll(tasks.ToArray());
+            //List<byte> bytes = new List<byte>();
+            //foreach (var item in data)
+            //{
+            //    bytes.AddRange(item);
+            //}
+            //File.WriteAllBytes(Path.GetFileNameWithoutExtension(pathTxtBox.Text) + "copy" + Path.GetExtension(pathTxtBox.Text), data.ToArray());
         }
 
         private void fileBtn_Click(object sender, EventArgs e)
