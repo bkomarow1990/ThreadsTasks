@@ -32,6 +32,7 @@ namespace Task2
             int partSize = 0;
             int[] positions = null;
             BinaryReader b = null;
+            //Changes
             FileStream fs = new FileStream(pathTxtBox.Text, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             size = fs.Length;
             count = (int)threadsNUP.Value;
@@ -39,21 +40,23 @@ namespace Task2
             positions = new int[count+1];
             positions[0] = 0;
             positions[count] = 0;
+            //
             for (int i = 1; i < count; i++)
             {
                 positions[i] = pos + partSize;
+                pos+=positions[i];
             }
              b = new BinaryReader(fs);
             
             //Task[] tasks = new Task[count];
             string path = pathTxtBox.Text;
-           // for (int i = 0; i < count; i++)
-            //{
+            for (int i = 0; i < count; i++)
+            {
                 //tasks[i] = Task.Factory.StartNew(() =>
                 //{
                 //ThreadPool.QueueUserWorkItem((obj) => {
                 
-            Parallel.For(0, count, (i) => {
+            //Parallel.For(0, count, (i) => {
                     b.BaseStream.Seek(positions[i], SeekOrigin.Begin);
                     byte[] data = b.ReadBytes(partSize);
                     using (var stream = File.Open(path + i + ".part", FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
@@ -63,7 +66,7 @@ namespace Task2
                             writer.Write(data);
                         }
                     }
-                });
+                };
                  
                // });
                     
